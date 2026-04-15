@@ -1,4 +1,4 @@
-package main
+package db
 
 import "time"
 
@@ -9,7 +9,7 @@ type Event struct {
 	Payload    map[string]any
 }
 
-func seedEvents() []Event {
+func SeedEvents() []Event {
 	return []Event{
 
 		// ── BANKING ─────────────────────────────────────────────────────────

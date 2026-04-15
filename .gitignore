@@ -1,1 +1,16 @@
+# Environment — never commit secrets
+.env
+
+# Build output
+bin/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+
+# Test artifacts
+*.test
 results.json

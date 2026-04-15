@@ -1,15 +1,8 @@
-package main
+package rule
 
-type Rule struct {
-	ID         string
-	Name       string
-	TemplateID string
-	Expression string
-	Severity   string
-	Message    string
-}
-
-func seedRules() []Rule {
+// SeedRules returns a representative set of rules covering multiple industry
+// templates. All rules are active / live and use expr-lang syntax.
+func SeedRules() []Rule {
 	return []Rule{
 
 		// ── BANKING ─────────────────────────────────────────────────────────
@@ -18,16 +11,22 @@ func seedRules() []Rule {
 			Name:       "Large International Wire — New Account",
 			TemplateID: "bank_wire_transfer",
 			Expression: `payment.amount > 10000 && sender.accountAge < 30`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "High-value wire from account less than 30 days old",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_bank_002",
 			Name:       "Transfer to High-Risk Jurisdiction",
 			TemplateID: "bank_wire_transfer",
 			Expression: `receiver.country == "SC" || receiver.country == "KY" || receiver.country == "VU"`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Transfer destination is a high-risk offshore jurisdiction",
+			Priority:   20,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 
 		// ── FINTECH ─────────────────────────────────────────────────────────
@@ -36,24 +35,33 @@ func seedRules() []Rule {
 			Name:       "Unverified User — Large Transaction",
 			TemplateID: "fintech_payment",
 			Expression: `user.kycVerified == false && transaction.amount > 1000`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Large transaction by unverified user",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_fin_002",
 			Name:       "VPN + Crypto Merchant",
 			TemplateID: "fintech_payment",
 			Expression: `device.isVPN == true && transaction.merchantMCC == 6051`,
-			Severity:   "critical",
+			Severity:   SeverityCritical,
 			Message:    "Crypto merchant purchase made over VPN",
+			Priority:   5,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_fin_003",
 			Name:       "New Account — High Value",
 			TemplateID: "fintech_payment",
 			Expression: `user.accountAgeDays < 7 && transaction.amount > 5000`,
-			Severity:   "medium",
+			Severity:   SeverityMedium,
 			Message:    "High-value transaction on account less than 7 days old",
+			Priority:   20,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 
 		// ── CRYPTO ──────────────────────────────────────────────────────────
@@ -62,24 +70,33 @@ func seedRules() []Rule {
 			Name:       "Blacklisted Wallet Withdrawal",
 			TemplateID: "crypto_withdrawal",
 			Expression: `wallet.isBlacklisted == true`,
-			Severity:   "critical",
+			Severity:   SeverityCritical,
 			Message:    "Withdrawal attempted from a blacklisted wallet address",
+			Priority:   5,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_crypto_002",
 			Name:       "High Risk Score — Large Withdrawal",
 			TemplateID: "crypto_withdrawal",
 			Expression: `wallet.riskScore > 80 && withdrawal.amountUSD > 50000`,
-			Severity:   "critical",
+			Severity:   SeverityCritical,
 			Message:    "Large withdrawal from high-risk wallet",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_crypto_003",
 			Name:       "Unverified User — Any Withdrawal",
 			TemplateID: "crypto_withdrawal",
 			Expression: `user.kycVerified == false && withdrawal.amountUSD > 500`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Withdrawal by unverified user exceeds limit",
+			Priority:   20,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 
 		// ── HOTEL ────────────────────────────────────────────────────────────
@@ -88,16 +105,22 @@ func seedRules() []Rule {
 			Name:       "Bulk Same-Day Booking — Crypto Payment",
 			TemplateID: "hotel_reservation",
 			Expression: `reservation.roomsBooked > 5 && reservation.leadTimeDays == 0 && reservation.paymentMethod == "crypto"`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Bulk same-day booking paid with crypto",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_hotel_002",
 			Name:       "High-Value Reservation — Sanctioned Nationality",
 			TemplateID: "hotel_reservation",
 			Expression: `reservation.totalAmount > 50000 && (guest.nationality == "RU" || guest.nationality == "IR" || guest.nationality == "KP")`,
-			Severity:   "critical",
+			Severity:   SeverityCritical,
 			Message:    "High-value reservation by guest from sanctioned country",
+			Priority:   5,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 
 		// ── INSURANCE ────────────────────────────────────────────────────────
@@ -106,24 +129,33 @@ func seedRules() []Rule {
 			Name:       "Claim on Brand-New Policy",
 			TemplateID: "insurance_claim",
 			Expression: `claimant.policyAgeDays < 30 && claim.amountRequested > 10000`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Large claim filed within 30 days of policy inception",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_ins_002",
 			Name:       "Repeat Claimant — High Value",
 			TemplateID: "insurance_claim",
 			Expression: `claimant.previousClaims >= 3 && claim.amountRequested > 20000`,
-			Severity:   "medium",
+			Severity:   SeverityMedium,
 			Message:    "High-value claim from customer with 3 or more prior claims",
+			Priority:   20,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_ins_003",
 			Name:       "Claim Near Coverage Limit",
 			TemplateID: "insurance_claim",
 			Expression: `claim.amountRequested >= policy.coverageLimit * 0.9`,
-			Severity:   "medium",
+			Severity:   SeverityMedium,
 			Message:    "Claim amount is within 10% of policy coverage limit",
+			Priority:   30,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 
 		// ── E-COMMERCE ───────────────────────────────────────────────────────
@@ -132,24 +164,33 @@ func seedRules() []Rule {
 			Name:       "New Account — Bulk Electronics Order",
 			TemplateID: "ecommerce_order",
 			Expression: `buyer.accountAgeDays == 0 && order.category == "electronics" && order.itemCount > 10`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "Brand-new account placing bulk electronics order",
+			Priority:   10,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_ecom_002",
 			Name:       "Billing and Shipping Mismatch — New Card",
 			TemplateID: "ecommerce_order",
 			Expression: `shipping.addressMatchesBilling == false && payment.isNewCard == true`,
-			Severity:   "medium",
+			Severity:   SeverityMedium,
 			Message:    "New card used with mismatched billing and shipping address",
+			Priority:   20,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 		{
 			ID:         "rule_ecom_003",
 			Name:       "High Value Order — New Account",
 			TemplateID: "ecommerce_order",
 			Expression: `order.totalAmount > 1000 && buyer.accountAgeDays < 1`,
-			Severity:   "high",
+			Severity:   SeverityHigh,
 			Message:    "High-value order placed by account created today",
+			Priority:   5,
+			Status:     StatusActive,
+			Mode:       ModeLive,
 		},
 	}
 }

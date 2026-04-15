@@ -1,0 +1,643 @@
+openapi: "3.1.0"
+info:
+  title: Skaletek Rule Engine API
+  version: "0.1.0"
+
+servers:
+  - url: /api/v1
+
+paths:
+  # ── Templates ───────────────────────────────────────────────────────────────
+
+  /templates:
+    get:
+      operationId: listTemplates
+      summary: List templates
+      tags: [templates]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: createTemplate
+      summary: Create a template
+      tags: [templates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /templates/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ID"
+
+    get:
+      operationId: getTemplate
+      summary: Get a template by ID
+      tags: [templates]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    put:
+      operationId: updateTemplate
+      summary: Update a template
+      tags: [templates]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      operationId: deleteTemplate
+      summary: Delete a template
+      tags: [templates]
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ── Events ──────────────────────────────────────────────────────────────────
+
+  /events:
+    get:
+      operationId: listEvents
+      summary: List events
+      tags: [events]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: createEvent
+      summary: Ingest an event and evaluate active rules
+      tags: [events]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventIngestionResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /events/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ID"
+
+    get:
+      operationId: getEvent
+      summary: Get an event by ID
+      tags: [events]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    put:
+      operationId: updateEvent
+      summary: Update an event
+      tags: [events]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      operationId: deleteEvent
+      summary: Delete an event
+      tags: [events]
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ── Rules ────────────────────────────────────────────────────────────────────
+
+  /rules:
+    get:
+      operationId: listRules
+      summary: List rules
+      tags: [rules]
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: template_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, draft, disabled]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleList"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: createRule
+      summary: Create a rule (expression is validated before saving)
+      tags: [rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRuleRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /rules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ID"
+
+    get:
+      operationId: getRule
+      summary: Get a rule by ID
+      tags: [rules]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    put:
+      operationId: updateRule
+      summary: Update a rule (expression re-validated)
+      tags: [rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRuleRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      operationId: deleteRule
+      summary: Delete a rule
+      tags: [rules]
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+# ── Components ────────────────────────────────────────────────────────────────
+
+components:
+  parameters:
+    ID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+
+    # ── Template schemas ─────────────────────────────────────────────────────
+
+    Template:
+      type: object
+      required: [id, slug, name, schema, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TemplateList:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Template"
+        total:
+          type: integer
+
+    CreateTemplateRequest:
+      type: object
+      required: [slug, name]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+
+    UpdateTemplateRequest:
+      type: object
+      required: [slug, name]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        schema:
+          type: object
+          additionalProperties: true
+
+    # ── Event schemas ────────────────────────────────────────────────────────
+
+    Event:
+      type: object
+      required: [id, templateId, payload, occurredAt, receivedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+          format: uuid
+        externalRef:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+        receivedAt:
+          type: string
+          format: date-time
+
+    EventList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+
+    CreateEventRequest:
+      type: object
+      required: [templateId, payload, occurredAt]
+      properties:
+        templateId:
+          type: string
+          format: uuid
+        externalRef:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    UpdateEventRequest:
+      type: object
+      required: [payload, occurredAt]
+      properties:
+        externalRef:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+        occurredAt:
+          type: string
+          format: date-time
+
+    FiredAlert:
+      type: object
+      required: [ruleId, ruleName, severity, message]
+      properties:
+        ruleId:
+          type: string
+          format: uuid
+        ruleName:
+          type: string
+        severity:
+          type: string
+        message:
+          type: string
+
+    EventIngestionResult:
+      type: object
+      required: [event, alerts]
+      properties:
+        event:
+          $ref: "#/components/schemas/Event"
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/FiredAlert"
+
+    # ── Rule schemas ─────────────────────────────────────────────────────────
+
+    Rule:
+      type: object
+      required: [id, templateId, name, expression, severity, message, priority, status, mode, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        templateId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        expression:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        message:
+          type: string
+        priority:
+          type: integer
+        status:
+          type: string
+          enum: [active, draft, disabled]
+        mode:
+          type: string
+          enum: [live, shadow]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RuleList:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rule"
+
+    CreateRuleRequest:
+      type: object
+      required: [templateId, name, expression, severity]
+      properties:
+        templateId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        expression:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        message:
+          type: string
+        priority:
+          type: integer
+          default: 10
+        status:
+          type: string
+          enum: [active, draft, disabled]
+          default: draft
+        mode:
+          type: string
+          enum: [live, shadow]
+          default: live
+
+    UpdateRuleRequest:
+      type: object
+      required: [name, expression, severity]
+      properties:
+        name:
+          type: string
+        expression:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        message:
+          type: string
+        priority:
+          type: integer
+        status:
+          type: string
+          enum: [active, draft, disabled]
+        mode:
+          type: string
+          enum: [live, shadow]

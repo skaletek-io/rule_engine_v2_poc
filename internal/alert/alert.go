@@ -1,10 +1,13 @@
-package main
+package alert
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 	"time"
+
+	db "github.com/skaletek/rule-engine-v2-poc/internal/platform/db"
+	rules "github.com/skaletek/rule-engine-v2-poc/internal/rule"
 )
 
 type Alert struct {
@@ -20,7 +23,7 @@ type Alert struct {
 
 var alertCounter int
 
-func newAlert(event Event, rule Rule) Alert {
+func NewAlert(event db.Event, rule rules.Rule) Alert {
 	alertCounter++
 	return Alert{
 		ID:        fmt.Sprintf("alert_%03d", alertCounter),
@@ -34,7 +37,7 @@ func newAlert(event Event, rule Rule) Alert {
 	}
 }
 
-func persistAlerts(alerts []Alert, path string) error {
+func PersistAlerts(alerts []Alert, path string) error {
 	data, err := json.MarshalIndent(alerts, "", "  ")
 	if err != nil {
 		return err
